@@ -16,7 +16,7 @@
 //#define DEBUG
 
 
-
+//Hola cambio para bitbuket
 
                   // https://www.visualmicro.com/post/2017/01/16/Arduino-Cross-Platform-Library-Development.aspx //problema con la libreria Time, nos aparecia Error en Linker referencia vacia hacia setTime, now etc las funciones que usaba de aqui, asi fue la solucion
                                     //aparte de ese error el compilador indicaba que no se encontraba el elemento tmElements_t cuando se llamaba la libreria SD1307RTC, ese problema lo causo antes y ahora que formatie mi lapton, y resulta que cuando inicias la extencion visualMicro, nos pide en que carpeta se instalo el IDE de arduino, que se tiene que descargar
