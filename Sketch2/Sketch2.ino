@@ -15,7 +15,7 @@
 //#define VERSION_SMD
 //#define DEBUG
 
-
+//cambio 2
 //Hola cambio para bitbuket
 
                   // https://www.visualmicro.com/post/2017/01/16/Arduino-Cross-Platform-Library-Development.aspx //problema con la libreria Time, nos aparecia Error en Linker referencia vacia hacia setTime, now etc las funciones que usaba de aqui, asi fue la solucion
