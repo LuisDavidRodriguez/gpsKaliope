@@ -602,9 +602,82 @@ void ClaseManejoSim808::enciendeModuloConDelays()
 void ClaseManejoSim808::resetDelModuloDelays()
 {
     digitalWrite(pinDeReset, LOW);
-    delay(100);
+    delay(300); //aumentamos el timepod e reset de 100m a 300ms
     wdt_reset();                                //aqnque tenemos 4 segundos aun asi lo reinicio xD
     digitalWrite(pinDeReset, HIGH);
+}
+
+void ClaseManejoSim808::preguntaBaudRateSoportados()
+{
+   
+    enviarComandoSinEvaluar(AT_INFO_BAUD_RATE_SOPORTADO, _MENOR_A_128_BYTES, nullptr);
+          
+
+    
+}
+
+void ClaseManejoSim808::preguntarBaudRateActual()
+{
+    enviarComandoSinEvaluar(AT_INFO_BAUD_RATE_ACTUAL, _MENOR_A_32_BYTES, nullptr);
+}
+
+void ClaseManejoSim808::configurarBaudRate(String baudRate)
+{
+    char* info;
+
+    String comando(AT_CONFIG_SET_BAUD_RATE___ATW);
+    /*
+    "AT+IPR=XXXX"
+    */
+    comando.replace("XXXX", baudRate);
+
+    char* com;
+    com = new char[comando.length()];
+    comando.toCharArray(com, comando.length() + 1);
+    Serial.println(com);
+    /*
+    AT+IPR=115200
+    */
+
+
+
+
+    info = enviarComandoSinEvaluar(com, _MENOR_A_32_BYTES, nullptr);
+    delete[] com;                       //liberamos la memoria del puntero
+
+    
+    //Serial.print(info);
+    /*
+    * AT+IPR=115200
+        OK
+    */
+    
+    if (strstr(info, "OK") != nullptr) {
+        
+        Serial.println(F("Nuevo baudrate definido exitosamente, cambie el baudrate de comunicacion actual del puerto serie de arduino y cambie el baudrate de comunicacion con el sim"));
+       
+    }
+    else {
+        Serial.println(F("NO HAY COMUNICACION CON EL MODULO SIM ASEGURATE QUE ESTE ENCENDIDO Y ENTONCES CHEQUEE BAUDRATES INICIALES DE LOS PEURTOS SERIES DEL PROGRAMA, PODRIAN NO ESTAR DEFINIDOS A LA MISMA VELOCIDAD"));
+        Serial.println(F("ARDUINO Y EL MODULO SIM DEBEN ESTAR DEFINIDOS A LA MISMA DVELOCIDAD POR EJEMPLO 9600 PARA QUE LA COMUNICACION SEA BUENA. SI NO ES ASI PUEDE SER PORQUE EL MODULO SIM ES NUEVO"));
+        Serial.println(F("pARA CORREGIR ESTO CARGE EL PROGRAMA CAMBIANDO LA VELOCIDAD INICIAL DE LOS PEURTOS SERIE HASTA ENCONTRAR LA VELOCIDAD EN LA QUE EL MODULO SIM ESTA CONFIGURADO, Y EN ESE MOMENTO EL PROGRMA DEFINIRA LOS NEUVOS BAUDRATES, PERO CLARO SIEMPRE Y CUANDO EL MDOULO SIM ESTE ENCENDIDO"));
+
+    }
+
+}
+
+void ClaseManejoSim808::guardarDatosMemoriaNoVolatil()
+{
+
+    Serial.println(F("----------Guardar datos en la memoria no volatil del SIM 808---------"));
+    char* info;
+    info = enviarComandoSinEvaluar(AT_CONFIG_GUARDAR_CONFIGURACIONES_EN_MEMORIA_NO_VOLATIL, _MENOR_A_32_BYTES, nullptr);
+    //Serial.println(info);
+    /*
+    AT&W
+    O
+    */
+    Serial.println(F("----------Fin datos en la memoria no volatil del SIM 808 ---------"));
 }
 
 

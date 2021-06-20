@@ -11,7 +11,7 @@ RetardosConMillis::RetardosConMillis(unsigned long retardo)
 {
 	
 	
-	retardoEnMillis = retardo;
+	this->retardo = retardo;
 	forzar = false;
 
 	//la inicializamos con los millis a la hora que se crea el objeto
@@ -23,23 +23,23 @@ RetardosConMillis::RetardosConMillis(unsigned long retardo)
 
 void RetardosConMillis::inicializarMillis()
 {
-	this->millisIniciales = millis();
+	this->iniciales = getTime();
 }
 
 void RetardosConMillis::setRetardo(unsigned long tiempoEnMillis)
 {
-	this->retardoEnMillis = tiempoEnMillis;
+	this->retardo = tiempoEnMillis;
 }
 
 bool RetardosConMillis::seHaCumplido(bool reiniciar)
 {
-	millisActuales = millis();				//consultamos el tiempo actual del programa
+	actuales = getTime();				//consultamos el tiempo actual del programa
 
 
-	if ((millisActuales > millisIniciales + retardoEnMillis) || forzar) {	
+	if ((actuales > iniciales + retardo) || forzar) {	
 		
 		if (reiniciar) {
-			millisIniciales = millisActuales;
+			iniciales = actuales;
 			/*los milis iniciales ahora valen lo que el tiempo del programa haciendo que 
 			tenga que volver a transcurrir el tiempo de retardo para que vuelva a entrar al if
 			es decir aqui reiniciamos el contador para que vuelva a contar el retardo
@@ -60,7 +60,7 @@ bool RetardosConMillis::seHaCumplido(bool reiniciar)
 unsigned long RetardosConMillis::getRetardo()
 {
 
-	return this->retardoEnMillis;
+	return this->retardo;
 }
 
 void RetardosConMillis::reiniciar()
@@ -71,4 +71,9 @@ void RetardosConMillis::reiniciar()
 void RetardosConMillis::forzarRetardo()
 {
 	forzar = true;
+}
+
+unsigned long RetardosConMillis::getTime()
+{
+	return millis();
 }

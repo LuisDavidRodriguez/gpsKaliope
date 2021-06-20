@@ -3,9 +3,9 @@
 
 class RetardosConMillis {
 private:
-	unsigned long millisIniciales;
-	unsigned long millisActuales;
-	unsigned long retardoEnMillis;
+	unsigned long iniciales;
+	unsigned long actuales;
+	unsigned long retardo;
 	bool forzar = false;
 
 public:
@@ -49,4 +49,6 @@ public:
 	*/
 	void forzarRetardo();
 
+
+	virtual unsigned long getTime();
 };

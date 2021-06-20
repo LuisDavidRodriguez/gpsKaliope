@@ -123,6 +123,10 @@ public:
 	bool getEstatusModuloEstaApagadoEncendido();
 	void enciendeModuloConDelays();
 	void resetDelModuloDelays();
+	void preguntaBaudRateSoportados();
+	void preguntarBaudRateActual();
+	void configurarBaudRate(String baudRate);
+	void guardarDatosMemoriaNoVolatil();
 
 	
 	

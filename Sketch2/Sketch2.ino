@@ -51,9 +51,23 @@
 
 
 
+
+
+
+
+#define VERSION_SOFT 1.25
+//#define CARGAR_EEPROM         //si es la primera ves que se carga el sketch a un arduino debemos programar su eeprom con las variables de base para el funcionamiento de este programa. Son los tiempos, si no se carga hara todos los comandos seguidos sin importar el tiempo de pregunta, veras la consola que no deja de escribir
+//#define MODULO_SIM_NUEVO      //si el modulo sim no esta configurado a su baudrate debemos configurarlo descomentando esta linea
+
+
+
+
 //La direccion del modulo RTC es fija y es 0x68 que equivale al 104
 #define MI_DIRECCION_I2C 0X1                            //EN DECIMAL ES 1
 #define DIRECCION_ESCLAVO_ACELEROMETRO_I2C 0X2                //EN DECIMAL ES 2 JAJA LO PONGO EN EXA PA QUE SE VEA PRO XD
+
+
+
 
 //Cuidado a mayor velocidad por ejemplo 57600 cuando son datos de informacion largos es propenso el modulo sim a mas errores en 38400 esta bien puse 57600 y ocurrian mas errores imprevistos
 /*
@@ -300,10 +314,10 @@ VALORES DE LOS FILTROS. FILTRO CARGA DETECTADA MINIMO 80 PULSOS EN UN SEGUNDO. F
     pero tendriamos el limite del watch dog de maximo 8 segundos y eso tendriamos que reiniciar el watch dog justo antes de netrar a ese comando,
     quizas sea un problema esperar mas de 8 segundos prefiero optar por la opcion que ya realice de retornar true en lugar de false en el metodo
     VALORES DE LOS FILTROS. FILTRO CARGA DETECTADA MINIMO 80 PULSOS EN UN SEGUNDO. FILTRO MANTENER BUCLE VIVO DE CARGA 45 PULSOS CADA SEGUNDO
+
+    1.25 cambiamos el tiempo en ms del metodo reser del modulo sim de 100ms a 300ms
 */
 
-
-#define VERSION_SOFT 1.24
 
 
 
@@ -461,13 +475,99 @@ void setup() {
             
 
 
+#ifdef CARGAR_EEPROM
+   Serial.println(F("Cargando las variables a epprom por primera vez"));
+   Serial.println(F("Se ha enontrado definido la linea #define CARGAR_EEPROM"));
+
+                //La primera vez que cargo el Sketch a un arduino nuevo hay que programar su eeprom, despues vuevle a comenter #define CARGAR_EEPROM para que ya no entrea esta linea
+            luisdaEE.setConfiguracionesDesdeString("STATUSKALIOPEOK,60,20,0,20,10,0,-5,0");
+
+            Serial.println(F("Se han cargado las variables iniciales en la eeprom para este programa, Vuelva a cargar el programa a arduino comentando ahora #define CARGAR_EEPROM"));
+            Serial.println(F("detendremos el procesador aqui hasta que se recarge el software"));
+            wdt_disable();
+            while (true) {
+                //detenemos el procesador ene ste bucle para que no avance y el programador se de cuenta que el programa entro a este metodo de configuracion
+                //y que recartge el software con los nuevos baudrates
+            }
+
+#endif // CARGAR_EEPROM
+
             
-            //La primera vez que cargo el Sketch a un arduino nuevo hay que programar su eeprom, despues lo borramos
-            //luisdaEE.setConfiguracionesDesdeString("STATUSKALIOPEOK,60,20,0,20,10,0,-6,0");
 
            
             //Timer5.initialize(5000000);
             //Timer5.attachInterrupt(solicitarContadoresAcelerometro);
+
+   //Si el moduo sim necesita ser confirguado con otro baudrate
+   /*
+   Si el modulo sim es nuevo o se instalo apenas es probale que venga confirgurado a la velocidad minima de 9600 baudios
+   si en el metodo, configuracion del modulo el arduino indica que el modulo esta apagado o sin conexion fisica al arduino o con un baudrate diferente
+   entonces debemos de cambiar los baudrates del programa, poniendolo primero a 9600 baudiso para que arduino se conecte al modulo y puedan comunicarse
+   y luego enviaremos la orden al modulo para que cambie a 115600 baudios,
+   una ves cambiado hay que volver a recompilar y subir el programa pero ahora ya a 115600 baudios para que ahora si
+   se comunique el arudino al modulo
+
+   ay algunos modulos que vienen configurados en 0 es decir se autoadaptaran a la velocidad del controlador
+   */
+#ifdef MODULO_SIM_NUEVO
+   Serial.println(F("---------Modulo sim nuevo configurar Baudrate------"));
+   Serial.println(F("Se a encontrado definida la linea #define MODULO_SIM_NUEVO por eso entramos a este programa para configurar los baudrates de un nuevo modulo sim"));
+   Serial.println(F("Si ya no se quiere entrar a este programa porque ya se configuraron los nuevos baudrates del modulo comente la linea #define MODULO_SIM_NUEVO para que el postprocesador ya no carge este progrma a arduino y vuelva a cargar el programa"));
+   
+   wdt_disable();
+   Serial.println(F("si no se obtiene respuesta en estos metodos o es porque el modulo esta desconectado o porque la veolocidad inicial definida el el rograma del peurto serie no es correcta"));
+   Serial.println(F("Velocidad actual de los puertos serie:"));
+   Serial.println(VELOCIDAD_PUERTOS_SERIE);
+
+   Serial.println(F("-----Preguntando baudrate soportados"));
+   sim808.preguntaBaudRateSoportados();
+   Serial.println(F("-----PreguntandoBaud rate actual"));
+   sim808.preguntarBaudRateActual();
+   Serial.println(F("-----Configurando nuevo Baudrate"));
+   
+   String baudRateNuevo = "115200";
+   sim808.configurarBaudRate(baudRateNuevo);
+
+   //Reiniciando comunicacion serial y serial con modulo sim a nueva velocidad
+   //esto porque debemos enviarle al modulo sim el comando para guardar la nueva velocidad en la memoria no volatil
+   //y como ahora el modulo esta definido a una nueva velocidad devemos comunicarnos con el usando la nueva velocidad
+   //entonces si los comandos de abajo responden queire decir que el modulo ya se encuentra configurado a la nueva velocidad
+   Serial.print(F("-----Iniciando objeto sim 808 nuevamente comunicacion a "));
+   Serial.println(baudRateNuevo);
+   sim808.begin(baudRateNuevo.toInt());
+   Serial.print(F("-----Apartir de aqui estos comando se estan enviando a la nueva velocidad "));
+
+   Serial.println(F("-----Guardando en memoria no volatil nueva velocidad del modulo"));
+   sim808.guardarDatosMemoriaNoVolatil();
+
+   Serial.println(F("-----Volviendo a preguntar baudrate actual antes de reinicio"));
+   sim808.preguntarBaudRateActual();
+
+   Serial.println(F("-----Reiniciando modulo sim para confirmar que los baudrates no se borran al reiniciar"));
+   sim808.resetDelModuloDelays();
+   delay(5000);//le damos tiempo al modulo de reiniciarse antes de volver a preguntar
+   Serial.println(F("-----Volviendo a preguntar baudrate actual despues de reinicio"));
+   sim808.preguntarBaudRateActual();
+
+
+
+   Serial.println(F("Ahora puede volver a cargar el programa y comentar la linea #define MODULO_SIM_NUEVO para que el programa ya no entre aqui otra vez."));
+   Serial.println(F("El modulo sim se a configurado con los nuevos baudrates aunque se reinicie deberia conectar. Carge el software nuevamente a arduino per actualice la velocidad de los peurtos serie a la nueva definida en el modulo"));
+   Serial.println(F("---------Fin Modulo sim nuevo configurar Baudrate------"));
+   while(true){
+       //detenemos el procesador ene ste bucle para que no avance y el programador se de cuenta que el programa entro a este metodo de configuracion
+       //y que recartge el software con los nuevos baudrates
+   }
+  
+   
+
+   
+#endif // 
+
+   
+
+
+   
 
 
             Serial.println(F("SetupFinalizado"));
@@ -570,7 +670,7 @@ void loop() {
         estadoDelModuloSim = sim808.getEstatusModuloEstaApagadoEncendido();
 
         if (!estadoDelModuloSim) {
-            Serial.println(F("El modulo esta apagado o sin conexion fisica al arduino, o el modulo no tiene nada de señal gsm y no esta respondiendo, activando Modulo..."));
+            Serial.println(F("El modulo esta apagado o sin conexion fisica al arduino, Si el modulo es nuevo podria estar confirgurado a otro baudrate diferente, o el modulo no tiene nada de señal gsm y no esta respondiendo, activando Modulo..."));
             //en algunas ocaciones cuando enviamos la informacion de un mensaje o el cuerpo de info gprs el modulo sim responde con su inductor >
                 //en ese momento todo comando que le envies el modulo lo toma como parte del cuerpo del mensaje, entonces en ocaciones
                 //por alguna razon mis metodos que envian la info del mensaje y que envian el caracter de salida char(26) para que el modulo comience a recibir normalmente los comandos
@@ -1798,6 +1898,3 @@ void solicitarContadoresAcelerometro() {
 
     Timer5.attachInterrupt(solicitarContadoresAcelerometro);
 }
-
-
-
