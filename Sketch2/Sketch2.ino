@@ -58,7 +58,7 @@
 #define VERSION_SOFT 1.25
 //#define CARGAR_EEPROM         //si es la primera ves que se carga el sketch a un arduino debemos programar su eeprom con las variables de base para el funcionamiento de este programa. Son los tiempos, si no se carga hara todos los comandos seguidos sin importar el tiempo de pregunta, veras la consola que no deja de escribir
 //#define MODULO_SIM_NUEVO      //si el modulo sim no esta configurado a su baudrate debemos configurarlo descomentando esta linea
-
+//#define PRUEBA_WATCH_DOG
 
 
 
@@ -254,7 +254,16 @@ ya que el procesador no lo dejamos esperando dentro del bucle que lee el buffer 
 y ni se diga cuanod lo tenia a 38400 y a 19200 como lo tendria que haber hecho por el maldito software serial para recibir mas estabilidad acambio.
 
 */
+#ifdef MODULO_SIM_NUEVO
+#define VELOCIDAD_PUERTOS_SERIE 9600 //esta sera la velocidad usada para configurar los puertos serie, es importante mantenerla porque le metodo que lee los datos la necesita para saber cuanto tiempo esperar una respuesta
+
+#else
 #define VELOCIDAD_PUERTOS_SERIE 115200 //esta sera la velocidad usada para configurar los puertos serie, es importante mantenerla porque le metodo que lee los datos la necesita para saber cuanto tiempo esperar una respuesta
+
+#endif
+
+
+
 
 
 
@@ -398,11 +407,7 @@ void setup() {
 
    wdt_enable(WDTO_8S);                                    //lo activamos con un tiempo de 4s, si en alguna parte del programa no se llega al comando wdt_reset(), y este tiempo se agota significa que el arduino se quedo colgado en algun punto y entonces el watch dog lo resetea en automatico
   
-
-   
-
-                                             //desactivamos el wathc dog en lo que se hacen las configuraciones
-   
+      
     sim808.begin(VELOCIDAD_PUERTOS_SERIE);                                    //iniciamos la comunicacion del sim 808 a 19200 SI TU VES CON UN OSCILOSCOPIO CADA PULSO O BIT LE TOMARA 50us si doblas la velocidad a 38400 sera de 25us en cambio si la bajas a 9600 tomara 100us, el modulo es compatible con 19200 con 38400 ya no funciona y con menos creo no muy bien
     Serial.begin(VELOCIDAD_PUERTOS_SERIE);                                    //Se tiene que inicializar el puerto serie del sim y del la computador a la misma velocidad
     Serial.println(F("WhatchDogActivado"));
@@ -566,10 +571,19 @@ void setup() {
 
    
 
+#ifdef PRUEBA_WATCH_DOG
+   sim808.resetDelModuloDelays();
+   while (true) {
+       
+       Serial.println("En loop infinito prueba de watch dog y reset de modulo sim808");
+       delay(1000);
+   }
+
+#endif
 
    
-
-
+   
+   //sim808.resetDelModuloDelays();
             Serial.println(F("SetupFinalizado"));
     }
 
@@ -586,7 +600,7 @@ void loop() {
         //EEPROM.get(4, gato);
         //EEPROM.get(0, valor);
         //Serial.println(luisdaEE.getUltimaLecturaMemoriaSD());
-
+        
         if (!memoriaSDInicializadaCorrectamente) {
             
             if (SD.begin()) {
@@ -883,6 +897,8 @@ void loop() {
                     Serial.println(F(" Ocurrio un error al tratar de preguntar el estatus del contexto"));
                     contadorGestorDeErroresModuloSim++;
                     sePuedenHacerConexionesGPRS = false;
+                    Serial.println(F(" aumentando conteo en gestor de errores. pero mejor reiniciamos el simm inmediatamente"));
+                    sim808.resetDelModuloDelays();
                     break;
                 
                 default:

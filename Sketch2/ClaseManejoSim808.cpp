@@ -602,6 +602,7 @@ void ClaseManejoSim808::enciendeModuloConDelays()
 void ClaseManejoSim808::resetDelModuloDelays()
 {
     digitalWrite(pinDeReset, LOW);
+    Serial.println(F("ResetModule----------------------"));
     delay(300); //aumentamos el timepod e reset de 100m a 300ms
     wdt_reset();                                //aqnque tenemos 4 segundos aun asi lo reinicio xD
     digitalWrite(pinDeReset, HIGH);
