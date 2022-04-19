@@ -28,7 +28,9 @@
                                     //y pum se corrige
                                     //algo paso en el link de arriba y antes aparecia en el exprorador de soluciones la libreria Time y DS1307 con un simbolo y aparecia en Referencias aparecian las 2, ahora no lo hace y funciona no se porque lo agrege como decia el link veremos si no falla
 
-#include <Time.h>
+
+#include <TimeLib.h>
+#include <LiquidCrystal_I2C.h>
 #include <DS1307RTC.h>
 #include <EEPROM.h>
 #include <Arduino.h>
